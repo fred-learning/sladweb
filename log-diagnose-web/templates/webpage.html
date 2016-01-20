@@ -1,0 +1,154 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <script type="text/javascript" src="/static/jquery-2.0.0.min.js"></script>
+    <script type="text/javascript" src="/static/jquery-ui"></script>
+    <link href="/static/bootstrap-combined.min.css" rel="stylesheet" media="screen">
+
+    <script type="text/javascript" src="/static/bootstrap.min.js"></script>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row-fluid">
+        <div class="span12">
+            <form class="form-inline" action="/submit/" method="post">
+                <fieldset>
+                    <legend>日志诊断工具</legend>
+                    <label>集群id</label><input type="text" id="clusterid" name="clusterid" placeholder="cluster id"/>
+                    <label>任务id</label><input type="text" id="appid" name="appid" placeholder="application id"/>
+                    <button class="btn" type="submit">提交</button>
+                </fieldset>
+            </form>
+            <table class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                    <th>集群id</th>
+                    <th>任务id</th>
+                    <th>stage id</th>
+                    <th>诊断task（正常/异常）</th>
+                    <th>诊断block（正常/异常）</th>
+                    <th>代码定位</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for item in items %}
+                <tr class="success" id="trid_{{ item['stageid'] }}">
+                    <td>{{ item.clusterid }}</td>
+                    <td>{{ item["appid"] }}</td>
+                    <td>{{ item["stageid"] }}</td>
+                    <td><a data-toggle="collapse" data-parent="#accordion"
+                           href="#collapse_task_good_{{item['stageid']}}">{{ item["goodcnt_task"]}}</a>/
+                        <a data-toggle="collapse" data-parent="#accordion"
+                           href="#collapse_task_bad_{{item['stageid']}}">{{ item["badcnt_task"]}}</a>
+                        <script type="text/javascript">
+                            if ({{ item["badcnt_task"]}}!="0"){
+                                var tr = document.getElementById("trid_{{ item['stageid'] }}");
+                                tr.className="error"
+                            }
+                        </script>
+                        <div id="collapse_task_good_{{item['stageid']}}" class="panel-collapse collapse">
+                            <table class="table table-bordered table-hover">
+                                <thead>
+                                <tr>
+                                    <th>诊断单元</th>
+                                    <th>诊断类别</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {%for onetask in item.goodmap_task%}
+                                <tr class="success">
+                                    <td><a href="/detail?clusterid={{item.clusterid}}&appid={{item['appid']}}&metaid={{onetask}}&metatype=task">{{onetask}}</a></td>
+                                    <td>{{item["goodmap_task"][onetask]}}</td>
+                                </tr>
+                                {%endfor%}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="collapse_task_bad_{{item['stageid']}}" class="panel-collapse collapse">
+                            <table class="table table-bordered table-hover">
+                                <thead>
+                                <tr>
+                                    <th>诊断单元</th>
+                                    <th>诊断类别</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {%for onetask in item.badmap_task%}
+                                <tr class="error">
+                                    <td><a href="/detail?clusterid={{item.clusterid}}&appid={{item['appid']}}&metaid={{onetask}}&metatype=task">{{onetask}}</a></td>
+                                    <td>{{item["badmap_task"][onetask]}}</td>
+                                </tr>
+                                {%endfor%}
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+                    <td><a data-toggle="collapse" data-parent="#accordion"
+                           href="#collapse_block_good_{{item['stageid']}}">{{ item["goodcnt_block"]}}</a>/
+                        <a data-toggle="collapse" data-parent="#accordion"
+                           href="#collapse_block_bad_{{item['stageid']}}">{{ item["badcnt_block"]}}</a>
+                        <script type="text/javascript">
+                            if ({{ item["badcnt_block"]}}!="0"){
+                                var tr = document.getElementById("trid_{{ item['stageid'] }}");
+                                tr.className="error"
+                            }
+                        </script>
+                        <div id="collapse_block_good_{{item['stageid']}}" class="panel-collapse collapse">
+                            <table class="table table-bordered table-hover">
+                                <thead>
+                                <tr>
+                                    <th>诊断单元</th>
+                                    <th>诊断类别</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {%for onetask in item.goodmap_block%}
+                                <tr class="success">
+                                    <td><a href="/detail?clusterid={{item.clusterid}}&appid={{item['appid']}}&metaid={{onetask}}&metatype=block">{{onetask}}</a></td>
+                                    <td>{{item["goodmap_block"][onetask]}}</td>
+                                </tr>
+                                {%endfor%}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="collapse_block_bad_{{item['stageid']}}" class="panel-collapse collapse">
+                            <table class="table table-bordered table-hover">
+                                <thead>
+                                <tr>
+                                    <th>诊断单元</th>
+                                    <th>诊断类别</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {%for onetask in item.badmap_block%}
+                                <tr class="error">
+                                    <td><a href="/detail?clusterid={{item.clusterid}}&appid={{item['appid']}}&metaid={{onetask}}&metatype=block">{{onetask}}</a></td>
+                                    <td>{{item["badmap_block"][onetask]}}</td>
+                                </tr>
+                                {%endfor%}
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+                    <td>{{ item["locate"] }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <div class="pagination">
+                <ul class="unstyled inline">
+                    {% for i in range(1, page_count + 1) %}
+                    {% if i != active_page %}
+                    <li><a href="/?startIdx={{(i - 1) * 10}}&appid={{app_id}}">{{ i }}</a></li>
+                    {% else %}
+                    <li class="active"><a href="/?startIdx={{(i - 1)
+														 * 10}}&appid={{app_id}}">{{ i }}</a></li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,228 @@
+<html>
+<style>
+    .axis path,
+    .axis line{
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+    }
+    .axis text {
+    font-family: sans-serif;
+    font-size: 11px;
+    }
+    .MyRect {
+    fill: steelblue;
+    }
+    .MyText {
+    fill: white;
+    text-anchor: middle;
+    }
+</style>
+<head>
+    <meta charset="UTF-8">
+	<link href="/static/bootstrap-combined.min.css" rel="stylesheet" media="screen">
+	<link href="/static/lightbox.css" rel="stylesheet">
+	<script type="text/javascript" src="/static/lightbox.js"></script>
+    <script type="text/javascript" src="/static/jquery-2.0.0.min.js"></script>
+    <script type="text/javascript" src="/static/jquery-ui"></script>
+    <script type="text/javascript" src="/static/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/static/d3.min.js"></script>
+    <title>详细分析</title>
+</head>
+
+<body>
+<legend>日志诊断工具--详细报告,任务id：{{appid}},诊断单元：{{metaid}}</legend>
+<script>
+	//画布大小
+	var width = 1000;
+	var height = 400;
+
+	//在 body 里添加一个 SVG 画布
+	var svg = d3.select("body")
+		.append("svg")
+		.attr("width", width)
+		.attr("height", height);
+
+	//画布周边的空白
+	var padding = {left:100, right:30, top:50, bottom:50};
+
+	//定义一个数组
+	var dataset = {{dataset}};
+
+	//x轴的比例尺
+	var xScale = d3.scale.ordinal()
+		.domain(d3.range(dataset.length))
+		.rangeRoundBands([0, width - padding.left - padding.right]);
+
+	//y轴的比例尺
+	var yScale = d3.scale.linear()
+		.domain([0,d3.max(dataset)])
+		.range([height - padding.top - padding.bottom, 0]);
+
+	//定义x轴
+	var xAxis = d3.svg.axis()
+		.scale(xScale)
+		.orient("bottom");
+
+	//定义y轴
+	var yAxis = d3.svg.axis()
+		.scale(yScale)
+		.orient("left");
+
+	//矩形之间的空白
+	var rectPadding = 4;
+
+	//添加矩形元素
+	var rects = svg.selectAll(".MyRect")
+		.data(dataset)
+		.enter()
+		.append("rect")
+		.attr("class","MyRect")
+		.attr("transform","translate(" + padding.left + "," + padding.top + ")")
+		.attr("x", function(d,i){
+			return xScale(i) + rectPadding/2;
+		} )
+		.attr("width", xScale.rangeBand() - rectPadding )
+		.attr("y",function(d){
+			var min = yScale.domain()[0];
+			return yScale(min);
+		})
+		.attr("height", function(d){
+			return 0;
+		})
+		.transition()
+		.delay(function(d,i){
+			return i * 200;
+		})
+		.duration(2000)
+		.ease("bounce")
+		.attr("y",function(d){
+			return yScale(d);
+		})
+		.attr("height", function(d){
+			return height - padding.top - padding.bottom - yScale(d);
+		});
+
+	//添加文字元素
+	var texts = svg.selectAll(".MyText")
+		.data(dataset)
+		.enter()
+		.append("text")
+		.attr("class","MyText")
+		.attr("transform","translate(" + padding.left + "," + padding.top + ")")
+		.attr("x", function(d,i){
+			return xScale(i) + rectPadding/2;
+		} )
+		.attr("y",function(d){
+			return yScale(d);
+		})
+		.attr("dx",function(){
+			return (xScale.rangeBand() - rectPadding)/2;
+		})
+		.attr("dy",function(d){
+			return 20;
+		})
+		.text(function(d){
+			return d;
+		})
+		.attr("y",function(d){
+			var min = yScale.domain()[0];
+			return yScale(min);
+		})
+		.transition()
+		.delay(function(d,i){
+			return i * 200;
+		})
+		.duration(2000)
+		.ease("bounce")
+		.attr("y",function(d){
+			return yScale(d);
+		});
+
+	//添加x轴
+	svg.append("g")
+		.attr("class","axis")
+		.attr("transform","translate(" + padding.left + "," + (height - padding.bottom) + ")")
+		.call(xAxis);
+
+	//添加y轴
+	svg.append("g")
+		.attr("class","axis")
+		.attr("transform","translate(" + padding.left + "," + padding.top + ")")
+		.call(yAxis);
+	//增加一个x轴的标签
+    svg.append("text")
+        .attr("transform", "translate(" + (width/2) + "," + (height-padding.bottom/4) + ")")
+        .style("text-anchor", "middle")
+        .attr("font-size", 20)
+        .text("特征");
+    //增加一个y轴的标签
+    svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0-padding.left)
+        .attr("x", 0 - (height/2))
+        .attr("dy", "8em")
+        .style("text-anchor" , "middle")
+        .style("font-size", "20px")
+        .text("值");
+        //给图表添加一个标题
+    svg.append("text")
+        .attr("x", (width/2))
+        .attr("y", padding.top /2)
+        .attr("text-anchor", "middle")
+        .style("font-size", "16px")
+        .style("text-decoration", "underline")
+        .text("详细直方图");
+</script>
+<legend>具体对应详细信息</legend>
+<table class="table table-bordered table-hover">
+    <thead>
+    <tr>
+        <th>任务id</th>
+        <th>诊断单元</th>
+        <th>坐标序列</th>
+        <th>特征</th>
+        <th>特征值</th>
+        <th>日志模板</th>
+    </tr>
+    </thead>
+    <tbody>
+    {%for item in items%}
+    <tr class="success">
+        <td>{{appid}}</td>
+        <td>{{metaid}}</td>
+        <td>{{item[0]}}</td>
+        <td>{{item[1]}}</td>
+        <td>{{item[2]}}</td>
+        <td>{{item[3]}}</td>
+    </tr>
+    {%endfor%}
+    </tbody>
+</table>
+<legend>分析决策树</legend>
+{%if metatype=='task'%}
+<a href="/static/treeTaskKM.png" data-lightbox="image-1" data-title="My caption"><img src="/static/treeTaskKM.png"></a>
+{%else%}
+<a href="/static/treeBlockKM.png" data-lightbox="image-1" data-title="My caption"><img src="/static/treeBlockKM.png"></a>
+{%endif%}
+<script>
+</script>
+<legend>决策树节点信息</legend>
+<table class="table table-bordered table-hover">
+    <thead>
+    <tr>
+        <th>特征</th>
+        <th>模板</th>
+    </tr>
+    </thead>
+    <tbody>
+    {%for key in treemap%}
+    <tr class="success">
+        <td>{{key}}</td>
+        <td>{{treemap[key]}}</td>
+    </tr>
+    {%endfor%}
+    </tbody>
+</table>
+</body>
+</html>  
